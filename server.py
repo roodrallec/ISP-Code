@@ -3,7 +3,7 @@ import base64
 import numpy as np
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from CatRecognition import CheckImage
+from api.CatRecognition import CheckImage
 
 
 app = Flask(__name__, 
