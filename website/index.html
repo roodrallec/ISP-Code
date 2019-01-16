@@ -283,11 +283,8 @@
   }
 
   function recognizeImage(b64Image) {
-    // displayMatchedImages([imageFile]);
-    /* if no match found    displayNoMatchText()*/
-    // console.log(b64Image);
     return $.ajax({
-      url: 'http://167.99.61.137/cat_recognition_api/v1/actions/get_response',  // INSERT URL TO RECOGNITIONS SERVICE HERE
+      url: window.location.origin + '/cat_recognition_api/v1/actions/get_response',
       type: "POST",
       data: JSON.stringify({ 'image': b64Image }),
       // xhrFields: { withCredentials: true },
