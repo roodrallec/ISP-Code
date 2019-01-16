@@ -10,15 +10,18 @@ import dlib
 from dlib import rectangle
 from imutils import face_utils
 
-
+API_FOLDER = 'api'
 FOLDER = 'classes'
 ALPHA = 0.1
-PREDICTOR_DAT = 'predictor.dat'
+# Paths
+PREDICTOR_DAT = os.path.join(API_FOLDER, 'predictor.dat')
+FACE_RECOGNIZER = os.path.join(API_FOLDER, 'lbph_face_recognizer')
+FACE_CASCADE = os.path.join(API_FOLDER, "visionary.net_cat_cascade_web_LBP.xml")
 
 
 # Detect face box in image
 def FaceDetectionLBP(img):
-    face_cascade = cv.CascadeClassifier("visionary.net_cat_cascade_web_LBP.xml")
+    face_cascade = cv.CascadeClassifier(FACE_CASCADE)
     (H,W,D) = img.shape
     imgG = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
@@ -94,7 +97,7 @@ def CalculateSimilarities(face, faces):
     return sims
 
 
-#train face recognizer based on LBPH
+# train face recognizer based on LBPH
 def TrainFaceRecognizer(folder):
     labels = []
     faces = []
@@ -107,13 +110,13 @@ def TrainFaceRecognizer(folder):
                 faces.append(cv.imread(file))
                 curFaces.append(faces[-1])
                 labels.append(int(dir))
-    
-            with open(dir + '.cim', 'wb') as file:
+
+            with open(os.path.join(API_FOLDER, dir + '.cim'), 'wb') as file:
                 pickle.dump(curFaces, file)
-            with open(dir + '.csm', 'wb') as file:
+            with open(os.path.join(API_FOLDER, dir + '.csm'), 'wb') as file:
                 pickle.dump(InnerSimilarity(curFaces), file)
     else:
-        files = glob.glob('*.cim')
+        files = glob.glob(os.path.join(API_FOLDER, '*.cim'))
         for file in files:
             with open(file, 'rb') as f:
                 curFaces = pickle.load(f)
@@ -128,7 +131,7 @@ def TrainFaceRecognizer(folder):
     face_recognizer = cv.face.LBPHFaceRecognizer_create()
     face_recognizer.train(faces, labels)
 
-    face_recognizer.write('lbph_face_recognizer')
+    face_recognizer.write(FACE_RECOGNIZER)
     return face_recognizer
 
 
@@ -152,9 +155,7 @@ def ExtractFace(img):
         shape = GetLandmarks(img, rect)
         shape = face_utils.shape_to_np(shape)
         align = AlignDlib("")
-        aligned = align.align(96, img, bb=rect,
-                              landmarks=shape)
-
+        aligned = align.align(96, img, bb=rect, landmarks=shape)
         return aligned
     else:
         return None
@@ -163,7 +164,7 @@ def ExtractFace(img):
 # recognize face
 def RecognizeFace(face):
     face_recognizer = cv.face.LBPHFaceRecognizer_create()
-    face_recognizer.read('lbph_face_recognizer')
+    face_recognizer.read(FACE_RECOGNIZER)
     label = face_recognizer.predict(face)
     return label
 
@@ -182,8 +183,8 @@ def CheckImage(img):
     if face is not None:
         label = RecognizeFace(cv.cvtColor(face, cv.COLOR_BGR2GRAY))
         label = label[0]
-        with open(str(label) + '.cim', 'rb') as fim:
-            with open(str(label) + '.csm', 'rb') as fsim:
+        with open(os.path.join(API_FOLDER, str(label) + '.cim'), 'rb') as fim:
+            with open(os.path.join(API_FOLDER, str(label) + '.csm'), 'rb') as fsim:
                 result = CheckSimilarity(face, pickle.load(fim), pickle.load(fsim))
 
         if result:
@@ -201,27 +202,36 @@ def AddClass(images, label):
         face = ExtractFace(img)
         if face is not None:
             faces.append(face)
-    with open(str(label) + '.cim', 'wb') as file:
+    with open(os.path.join(API_FOLDER, str(label) + '.cim'), 'wb') as file:
         pickle.dump(faces, file)
-    with open(str(label) + '.csm', 'wb') as file:
+    with open(os.path.join(API_FOLDER, str(label) + '.csm'), 'wb') as file:
         pickle.dump(InnerSimilarity(faces), file)
+    return "Success"
+
+
+def AddNewClass(images):
+    return AddClass(images, np.max(GetLabels()) + 1)
+
+
+def GetLabels():
+    return [int(name[:-4]) for name in glob.glob('*.csm')]
 
 
 # modifies an existing class
 def ModifyClass(img, label):
     face = ExtractFace(img)
     if face is not None:
-        with open(str(label) + 'cim', 'rb') as file:
+        with open(os.path.join(API_FOLDER, str(label) + 'cim'), 'rb') as file:
             faces = pickle.load(file)
 
-        with open(str(label) + 'csm', 'rb') as file:
+        with open(os.path.join(API_FOLDER, str(label) + 'csm'), 'rb') as file:
             sims = pickle.load(file)
         sims.extend(CalculateSimilarities(face, faces))
-        with open(str(label) + 'csm', 'wb') as file:
+        with open(os.path.join(API_FOLDER, str(label) + 'csm'), 'wb') as file:
             pickle.dump(sims, file)
 
         faces.append(face)
-        with open(str(label) + 'cim', 'wb') as file:
+        with open(os.path.join(API_FOLDER, str(label) + 'cim'), 'wb') as file:
             pickle.dump(faces, file)
 
 

@@ -287,9 +287,10 @@
       url: window.location.origin + '/cat_recognition_api/v1/actions/get_response',
       type: "POST",
       data: JSON.stringify({ 'image': b64Image }),
-      // xhrFields: { withCredentials: true },
       contentType: "application/json",
-      success: function (data) { console.log(data); },
+      success: function (data) {
+        console.log(data.response);
+    },
       error: function (data) { console.log(data); }
     });
   }
