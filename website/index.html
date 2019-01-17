@@ -74,6 +74,7 @@
         <button class="button" onclick = "toggleUploadContainer()">Search for pets</button>
     </div>
 </div>
+
 <!-- Upload pet container -->
 <div class="container" id="container1" style="display: none">
     <h1>Please upload picture of your pet
@@ -306,6 +307,7 @@
   function displayMatchedProfile(profile) {
     if (profile) {
       $("#profile_name").text(profile.name);
+      $("#profile_id").text(profile.id);
       $("#profile_animal").text(profile.animal);
       $("#profile_lost").text(profile.lost);
       showImage(base64toBlob(profile.image), "#profile_image");
@@ -315,6 +317,7 @@
   }
 
   function recognizeImage(b64Image) {
+    $("#btn4").text('...Searching for matches...');
     return $.ajax({
       url: window.location.origin + '/cat_recognition_api/v1/actions/get_response',
       type: "POST",
@@ -322,10 +325,14 @@
       contentType: "application/json",
       success: function (data) {
         console.log(data.response);
+        $("#btn4").text('Search');
         if (data.response && data.response.image) displayMatchedProfile(data.response);
         else alert(data.response);
     },
-      error: function (data) { console.log(data); }
+      error: function (data) {
+        console.log(data);
+        $("#btn4").text('Search');
+      }
     });
   }
 
@@ -353,6 +360,7 @@
       console.log("Missing image file to recognize");
       return;
     }
+
     getBase64(imageFile).then(b64Image => recognizeImage(b64Image));
   }
 
