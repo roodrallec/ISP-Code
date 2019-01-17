@@ -94,13 +94,13 @@
         <div class="article1 first-art">
             <div class="avatar-upload" >
                 <div class="avatar-preview">
-                    <div id="profile0" style="background-image:url('Images/Cat01.jpg')";></div>
+                    <div id="profile_image" style="background-image:url('Images/Cat01.jpg')";></div>
                 </div>
             </div>
-            <h1> Name : Jose the pirate</h1>
-            <h1> id : 0111 </h1>
-            <h1>Animal type : Cat</h1>
-            <h1>Lost or found : Lost</h1>
+            <h1 id="profile_name"> Name : Jose the pirate</h1>
+            <h1 id="profile_id"> id : 0111 </h1>
+            <h1 id="profile_animal">Animal type : Cat</h1>
+            <h1 id="profile_lost">Lost or found : Lost</h1>
             <p><a href="mailto:someone@example.com?Subject=Pet%20Match" target="_top"><button button class="button">Contact</button></a></p>
         </div>
 
@@ -272,16 +272,6 @@
     else x.style.display = "none";
   }
 
-  function displayMatchedImages(matchedImages) {
-    for (profileIdx = 0; profileIdx < matchedImages.length; profileIdx++) {
-      toggleElement("results");
-      showImage(matchedImages[profileIdx], "#profile" + profileIdx);
-      profileIdx += 1;
-    }
-    var imageUploadFile = getUploadedImage();
-    if (imageUploadFile != null) showImage(imageUploadFile, "#registerNew");
-  }
-
   function base64toBlob(base64Data, contentType) {
     contentType = contentType || '';
     var sliceSize = 1024;
@@ -303,6 +293,27 @@
     return new Blob(byteArrays, { type: contentType });
   }
 
+  function showImage(file, elId) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      $(elId).css('background-image', 'url('+ e.target.result +')');
+      $(elId).hide();
+      $(elId).fadeIn(650);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function displayMatchedProfile(profile) {
+    if (profile) {
+      $("#profile_name").text(profile.name);
+      $("#profile_animal").text(profile.animal);
+      $("#profile_lost").text(profile.lost);
+      showImage(base64toBlob(profile.image), "#profile_image");
+    }
+    toggleElement("results");
+    showImage(getUploadedImage(), "#registerNew");
+  }
+
   function recognizeImage(b64Image) {
     return $.ajax({
       url: window.location.origin + '/cat_recognition_api/v1/actions/get_response',
@@ -311,10 +322,7 @@
       contentType: "application/json",
       success: function (data) {
         console.log(data.response);
-        if (data.response && data.response.image) {
-          blob = base64toBlob(data.response.image);
-          displayMatchedImages([blob]);
-        }
+        if (data.response && data.response.image) displayMatchedProfile(data.response);
         else alert(data.response);
     },
       error: function (data) { console.log(data); }
