@@ -12,7 +12,7 @@ from imutils import face_utils
 
 API_FOLDER = 'api'
 FOLDER = 'classes'
-ALPHA = 0.4
+ALPHA = 0.02
 # Paths
 PREDICTOR_DAT = os.path.join(API_FOLDER, 'predictor.dat')
 FACE_RECOGNIZER = os.path.join(API_FOLDER, 'lbph_face_recognizer')
