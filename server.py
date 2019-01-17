@@ -1,10 +1,13 @@
 import cv2 as cv
 import base64
 import numpy as np
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from api.CatRecognition import CheckImage, AddNewClass
+from api.CatRecognition import CheckImage, AddNewClass, TrainFaceRecognizer
+from db.utils import get_profile, create_profile
 
+DATABASE_DIR = 'cats'
 
 app = Flask(__name__, 
 	static_url_path='',
@@ -41,7 +44,19 @@ def get_model_response():
 	params = request.get_json()
 	try:
 		image = readb64(params.get('image'))
-		return jsonify({'response': CheckImage(image)})
+		label = CheckImage(image)
+
+		if label > -1:
+			print('Face detected %s' % str(label))
+			response = get_profile(label)
+
+		if label == -1:
+			response = "Face detected but no match found"
+
+		if label == -2:
+			response = "No face detected"
+
+		return jsonify({'response': response})
 	except KeyError as e:
 		return get_api_error_response('Malformed request, no "%s" param was found' % str(e), 400)
 	except ValueError as e:
@@ -49,11 +64,15 @@ def get_model_response():
 
 
 @app.route('/cat_recognition_api/v1/actions/add_new_profile', methods=['POST'])
-def get_model_response():
+def add_new_profile():
 	params = request.get_json()
 	try:
-		image = readb64(params.get('image'))
-		return jsonify({'response': AddNewClass([image])})
+		image = params.get('image')
+		classes = [readb64(image)]
+		profile = create_profile(**params)
+		AddNewClass(classes)
+		TrainFaceRecognizer(None)
+		return jsonify({'response': profile})
 	except KeyError as e:
 		return get_api_error_response('Malformed request, no "%s" param was found' % str(e), 400)
 	except ValueError as e:
